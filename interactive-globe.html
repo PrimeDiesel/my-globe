@@ -2,33 +2,117 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Simple Globe</title>
+  <title>3D Globe — DEBUG MODE</title>
   <style>
-    body, html { margin:0; padding:0; background:#000; overflow:hidden; }
-    #globeViz { width:100vw; height:100vh; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      overflow: hidden;
+    }
+    #debug {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 10000;
+      background: rgba(0,0,0,0.7);
+      padding: 10px;
+      font-size: 14px;
+    }
+    #globeViz {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+    #globeModal {
+      display: none;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      max-width: 320px;
+      font-family: system-ui;
+      color: #333;
+    }
   </style>
 </head>
 <body>
+  <div id="debug">🟢 DEBUG: Page loading...</div>
   <div id="globeViz"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
+  <div id="globeModal">
+    <h3>🌍 <span id="modal-country-name">Country</span></h3>
+    <p><strong>首都:</strong> <span id="modal-capital">—</span></p>
+    <p><strong>语言:</strong> <span id="modal-language">—</span></p>
+    <p><strong>文化:</strong> <span id="modal-culture">—</span></p>
+    <button onclick="document.getElementById('globeModal').style.display='none'">关闭</button>
+  </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const globe = Globe()(document.getElementById('globeViz'));
+    document.getElementById('debug').innerText = '🟢 DEBUG: Script started. Loading libraries...';
+  </script>
 
-      // Simple bright red globe
-      globe.globeMaterial(new THREE.MeshBasicMaterial({ color: '#ff4500' }));
-      globe.showAtmosphere(false);
-      globe.showGraticules(false);
+  <!-- Load THREE.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+  <script>
+    if (typeof THREE === 'undefined') {
+      document.getElementById('debug').innerText = '❌ ERROR: THREE.js FAILED TO LOAD';
+    } else {
+      document.getElementById('debug').innerText = '✅ DEBUG: THREE.js loaded successfully';
+    }
+  </script>
 
-      // Rotate by modifying globeMesh.rotation.y
-      function animate() {
-        globe.globeMesh().rotation.y += 0.005;
-        requestAnimationFrame(animate);
-      }
-      animate();
+  <!-- Load Globe.gl -->
+  <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
+  <script>
+    if (typeof Globe === 'undefined') {
+      document.getElementById('debug').innerText = '❌ ERROR: Globe.gl FAILED TO LOAD';
+    } else {
+      document.getElementById('debug').innerText = '✅ DEBUG: Globe.gl loaded. Initializing globe...';
+    }
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        try {
+          document.getElementById('debug').innerText = '🔧 DEBUG: Creating globe instance...';
+
+          const globe = Globe()
+            .globeMaterial(() => {
+              document.getElementById('debug').innerText = '🎨 DEBUG: Creating material...';
+              return new THREE.MeshPhongMaterial({
+                color: '#ff4500', // BRIGHT RED — IMPOSSIBLE TO MISS
+                shininess: 50,
+                specular: new THREE.Color('#ffffff')
+              });
+            })
+            .showAtmosphere(false) // DISABLE ATMOSPHERE FOR DEBUG
+            .showGraticules(false)  // DISABLE LINES
+            (document.getElementById('globeViz'));
+
+          document.getElementById('debug').innerText = '🌍 DEBUG: Globe created. Starting rotation...';
+
+          // Rotate to prove it's alive
+          let speed = 0.01;
+          function animate() {
+            globe.rotationY(globe.rotationY() + speed);
+            requestAnimationFrame(animate);
+          }
+          animate();
+
+          document.getElementById('debug').innerText = '✅ SUCCESS: GLOBE IS ALIVE AND SPINNING!';
+
+        } catch (err) {
+          document.getElementById('debug').innerText = '💥 CRITICAL ERROR: ' + err.message;
+          console.error(err);
+        }
+      }, 500);
     });
   </script>
 </body>
