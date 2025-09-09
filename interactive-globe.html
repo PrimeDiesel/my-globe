@@ -11,9 +11,9 @@
       background: #000;
     }
     #globeViz {
-      width: 100vw;
-      height: 100vh;
-      background: #000;
+      position: absolute;
+      width: 100%;
+      height: 100%;
     }
     #globeModal {
       display: none;
@@ -40,18 +40,19 @@
     <button onclick="document.getElementById('globeModal').style.display='none'">关闭</button>
   </div>
 
+  <!-- Load libraries -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
 
   <script>
-    // Wait for page to load
+    // Initialize when page loads
     window.onload = function() {
+      // Create globe
       const globe = Globe()
         .globeMaterial(() => new THREE.MeshPhongMaterial({
           color: '#1e6aa6',
           shininess: 30,
-          specular: new THREE.Color('#ffffff'),
-          bumpScale: 0.04
+          specular: new THREE.Color('#ffffff')
         }))
         .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
         .backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png')
@@ -72,29 +73,26 @@
       }
       rotate();
 
+      // Pause rotation on hover
       globe.container().addEventListener('mouseenter', () => rotationSpeed = 0);
       globe.container().addEventListener('mouseleave', () => rotationSpeed = 0.001);
 
-      // Zoom
+      // Zoom with mouse wheel
       globe.container().addEventListener('wheel', e => {
         e.preventDefault();
         globe.scale(Math.min(Math.max(150, globe.scale() + (e.deltaY > 0 ? -20 : 20)), 1200));
       });
 
-      // Country data
+      // Country database
       const countryDatabase = {
         "USA": { name: "美国", capital: "华盛顿", lat: 39.8, lng: -98.6, language: "英语", culture: "科技、自由、多元" },
         "CHN": { name: "中国", capital: "北京", lat: 35.9, lng: 104.2, language: "中文", culture: "历史、美食、传统" },
         "JPN": { name: "日本", capital: "东京", lat: 36.2, lng: 138.3, language: "日语", culture: "动漫、礼仪、技术" },
         "FRA": { name: "法国", capital: "巴黎", lat: 46.6, lng: 2.0, language: "法语", culture: "艺术、浪漫、美食" },
-        "BRA": { name: "巴西", capital: "巴西利亚", lat: -14.2, lng: -51.9, language: "葡萄牙语", culture: "足球、狂欢节、自然" },
-        "IND": { name: "印度", capital: "新德里", lat: 20.6, lng: 79.0, language: "印地语", culture: "瑜伽、宝莱坞、香料" },
-        "RUS": { name: "俄罗斯", capital: "莫斯科", lat: 61.5, lng: 105.3, language: "俄语", culture: "芭蕾、伏特加、套娃" },
-        "AUS": { name: "澳大利亚", capital: "堪培拉", lat: -25.3, lng: 133.8, language: "英语", culture: "袋鼠、冲浪、大堡礁" },
-        "CAN": { name: "加拿大", capital: "渥太华", lat: 56.1, lng: -106.3, language: "英语/法语", culture: "枫叶、冰球、自然" },
-        "EGY": { name: "埃及", capital: "开罗", lat: 26.8, lng: 30.8, language: "阿拉伯语", culture: "金字塔、尼罗河、法老" }
+        "BRA": { name: "巴西", capital: "巴西利亚", lat: -14.2, lng: -51.9, language: "葡萄牙语", culture: "足球、狂欢节、自然" }
       };
 
+      // Find nearest country to click
       function findNearestCountry(lat, lng) {
         let nearest = null, minDist = Infinity;
         for (let [code, c] of Object.entries(countryDatabase)) {
@@ -107,6 +105,7 @@
         return nearest;
       }
 
+      // Show country info in modal
       function showCountryInfo(c) {
         const m = document.getElementById.bind(document);
         m('modal-country-name').textContent = c.name;
