@@ -2,128 +2,35 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Interactive 3D Globe</title>
+  <title>Ultra Simple Globe</title>
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    #globeViz {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-    }
-    #globeModal {
-      display: none;
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      max-width: 320px;
-      font-family: system-ui;
-    }
+    body, html { margin:0; padding:0; background:#000; overflow:hidden; }
+    #globeViz { width:100vw; height:100vh; }
   </style>
 </head>
 <body>
   <div id="globeViz"></div>
-  <div id="globeModal">
-    <h3>🌍 <span id="modal-country-name">Country</span></h3>
-    <p><strong>首都:</strong> <span id="modal-capital">—</span></p>
-    <p><strong>语言:</strong> <span id="modal-language">—</span></p>
-    <p><strong>文化:</strong> <span id="modal-culture">—</span></p>
-    <button onclick="document.getElementById('globeModal').style.display='none'">关闭</button>
-  </div>
 
-  <!-- Load libraries -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
 
   <script>
-    // Initialize when page loads
-    window.onload = function() {
-      // Create globe
+    document.addEventListener('DOMContentLoaded', () => {
+      // Create SIMPLEST POSSIBLE GLOBE
       const globe = Globe()
-        .globeMaterial(() => new THREE.MeshPhongMaterial({
-          color: '#1e6aa6',
-          shininess: 30,
-          specular: new THREE.Color('#ffffff')
-        }))
-        .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
-        .backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png')
-        .showAtmosphere(true)
-        .atmosphereColor('#6ab9ff')
-        .atmosphereAltitude(0.12)
-        .onGlobeClick((coords) => {
-          const clickedCountry = findNearestCountry(coords.lat, coords.lng);
-          if (clickedCountry) showCountryInfo(clickedCountry);
-        })
+        .globeMaterial(() => new THREE.MeshBasicMaterial({ color: '#ff4500' })) // BRIGHT RED — impossible to miss
+        .showAtmosphere(false) // disable atmosphere
+        .showGraticules(false) // disable lines
         (document.getElementById('globeViz'));
 
-      // Auto-rotate
-      let rotationSpeed = 0.001;
-      function rotate() {
-        globe.rotationY(globe.rotationY() + rotationSpeed);
-        requestAnimationFrame(rotate);
+      // Rotate so you know it's alive
+      let speed = 0.005;
+      function animate() {
+        globe.rotationY(globe.rotationY() + speed);
+        requestAnimationFrame(animate);
       }
-      rotate();
-
-      // Pause rotation on hover
-      globe.container().addEventListener('mouseenter', () => rotationSpeed = 0);
-      globe.container().addEventListener('mouseleave', () => rotationSpeed = 0.001);
-
-      // Zoom with mouse wheel
-      globe.container().addEventListener('wheel', e => {
-        e.preventDefault();
-        globe.scale(Math.min(Math.max(150, globe.scale() + (e.deltaY > 0 ? -20 : 20)), 1200));
-      });
-
-      // Country database
-      const countryDatabase = {
-        "USA": { name: "美国", capital: "华盛顿", lat: 39.8, lng: -98.6, language: "英语", culture: "科技、自由、多元" },
-        "CHN": { name: "中国", capital: "北京", lat: 35.9, lng: 104.2, language: "中文", culture: "历史、美食、传统" },
-        "JPN": { name: "日本", capital: "东京", lat: 36.2, lng: 138.3, language: "日语", culture: "动漫、礼仪、技术" },
-        "FRA": { name: "法国", capital: "巴黎", lat: 46.6, lng: 2.0, language: "法语", culture: "艺术、浪漫、美食" },
-        "BRA": { name: "巴西", capital: "巴西利亚", lat: -14.2, lng: -51.9, language: "葡萄牙语", culture: "足球、狂欢节、自然" }
-      };
-
-      // Find nearest country to click
-      function findNearestCountry(lat, lng) {
-        let nearest = null, minDist = Infinity;
-        for (let [code, c] of Object.entries(countryDatabase)) {
-          const dist = Math.hypot(lat - c.lat, lng - c.lng);
-          if (dist < minDist && dist < 15) {
-            minDist = dist;
-            nearest = { ...c, code };
-          }
-        }
-        return nearest;
-      }
-
-      // Show country info in modal
-      function showCountryInfo(c) {
-        const m = document.getElementById.bind(document);
-        m('modal-country-name').textContent = c.name;
-        m('modal-capital').textContent = c.capital;
-        m('modal-language').textContent = c.language;
-        m('modal-culture').textContent = c.culture;
-        m('globeModal').style.display = 'block';
-      }
-
-      // Make globe fill screen
-      function resize() {
-        const el = document.getElementById('globeViz');
-        el.style.width = window.innerWidth + 'px';
-        el.style.height = window.innerHeight + 'px';
-      }
-      window.addEventListener('resize', resize);
-      resize();
-    };
+      animate();
+    });
   </script>
 </body>
 </html>
