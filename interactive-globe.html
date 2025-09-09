@@ -1,128 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Interactive 3D Globe — WITH COUNTRIES & LABELS</title>
-  <style>
-    body, html {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background: #000;
-    }
-    #globeViz {
-      width: 100vw;
-      height: 100vh;
-    }
-    #infoPanel {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      max-width: 320px;
-      font-family: system-ui;
-      display: none;
-      z-index: 1000;
-    }
-  </style>
+<meta charset="utf-8">
+<title>Interactive 3D Globe</title>
+<style>
+  html, body { margin:0; padding:0; overflow:hidden; height:100%; background:#000; }
+  #globeViz { width:100%; height:100%; }
+  #globeModal {
+    display:none;
+    position:absolute;
+    top:20px;
+    left:20px;
+    z-index:1000;
+    background:white;
+    padding:16px;
+    border-radius:12px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);
+    max-width:300px;
+    font-family:system-ui;
+  }
+  #globeModal h3 { margin:0 0 8px; }
+</style>
 </head>
 <body>
-  <div id="globeViz"></div>
-  <div id="infoPanel">
-    <h3>🌍 <span id="countryName">Country</span></h3>
-    <p><strong>首都:</strong> <span id="capital">—</span></p>
-    <p><strong>语言:</strong> <span id="language">—</span></p>
-    <p><strong>文化:</strong> <span id="culture">—</span></p>
-    <button onclick="resetView()" style="margin-top: 16px; padding: 8px 16px; background: #0066ff; color: white; border: none; border-radius: 6px; cursor: pointer;">重置视角</button>
-  </div>
+<div id="globeViz"></div>
+<div id="globeModal">
+  <h3>🌍 <span id="modal-country-name">Country</span></h3>
+  <p><strong>Capital:</strong> <span id="modal-capital">—</span></p>
+  <p><strong>Language:</strong> <span id="modal-language">—</span></p>
+  <p><strong>Culture:</strong> <span id="modal-culture">—</span></p>
+  <button onclick="document.getElementById('globeModal').style.display='none'">Close</button>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const globe = Globe()(document.getElementById('globeViz'));
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const globe = Globe()(document.getElementById("globeViz"));
 
-      // Realistic Earth texture
-      globe.globeMaterial(new THREE.MeshPhongMaterial({
-        map: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg'),
-        bumpMap: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png'),
-        bumpScale: 0.3,
-        specularMap: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-specular.gif'),
-        shininess: 10
-      }));
+  globe.globeMaterial(new THREE.MeshPhongMaterial({
+    map: new THREE.TextureLoader().load("https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg"),
+    bumpMap: new THREE.TextureLoader().load("https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png"),
+    bumpScale: 0.3,
+    specularMap: new THREE.TextureLoader().load("https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-specular.gif"),
+    shininess: 10
+  }));
 
-      globe.backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png');
-      globe.showAtmosphere(true).atmosphereColor('#88ccff').atmosphereAltitude(0.12);
+  globe.backgroundImageUrl("https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png");
+  globe.showAtmosphere(true).atmosphereColor("#88ccff").atmosphereAltitude(0.12);
 
-      // Auto-rotation
-      globe.controls().autoRotate = true;
-      globe.controls().autoRotateSpeed = 0.5;
+  globe.controls().autoRotate = true;
+  globe.controls().autoRotateSpeed = 0.5;
 
-      // Disable auto-rotate on interaction
-      globe.controls().addEventListener('start', () => {
-        globe.controls().autoRotate = false;
-      });
+  const countryDatabase = [
+    {name:"USA", capital:"Washington D.C.", lat:38.9, lng:-77.0, language:"English", culture:"Technology, Freedom, Diversity"},
+    {name:"China", capital:"Beijing", lat:39.9, lng:116.4, language:"Chinese", culture:"History, Food, Tradition"},
+    {name:"Japan", capital:"Tokyo", lat:35.7, lng:139.7, language:"Japanese", culture:"Anime, Etiquette, Technology"},
+    {name:"France", capital:"Paris", lat:48.9, lng:2.4, language:"French", culture:"Art, Romance, Cuisine"},
+    {name:"Brazil", capital:"Brasilia", lat:-15.8, lng:-47.9, language:"Portuguese", culture:"Football, Carnival, Nature"},
+    {name:"Egypt", capital:"Cairo", lat:30.0, lng:31.2, language:"Arabic", culture:"Pyramids, Nile, Pharaohs"},
+    {name:"India", capital:"New Delhi", lat:28.6, lng:77.2, language:"Hindi", culture:"Yoga, Bollywood, Spices"},
+    {name:"Russia", capital:"Moscow", lat:55.8, lng:37.6, language:"Russian", culture:"Ballet, Vodka, Matryoshka"},
+    {name:"Australia", capital:"Canberra", lat:-35.3, lng:149.1, language:"English", culture:"Kangaroo, Surfing, Great Barrier Reef"},
+    {name:"Canada", capital:"Ottawa", lat:45.4, lng:-75.7, language:"English/French", culture:"Maple, Hockey, Nature"}
+  ];
 
-      // Country data with positions
-      const countries = [
-        { name: "美国", code: "USA", lat: 39.8, lng: -98.6, capital: "华盛顿", language: "英语", culture: "科技、自由、多元" },
-        { name: "中国", code: "CHN", lat: 35.9, lng: 104.2, capital: "北京", language: "中文", culture: "历史、美食、传统" },
-        { name: "日本", code: "JPN", lat: 36.2, lng: 138.3, capital: "东京", language: "日语", culture: "动漫、礼仪、技术" },
-        { name: "法国", code: "FRA", lat: 46.6, lng: 2.0, capital: "巴黎", language: "法语", culture: "艺术、浪漫、美食" },
-        { name: "巴西", code: "BRA", lat: -14.2, lng: -51.9, capital: "巴西利亚", language: "葡萄牙语", culture: "足球、狂欢节、自然" },
-        { name: "埃及", code: "EGY", lat: 26.8, lng: 30.8, capital: "开罗", language: "阿拉伯语", culture: "金字塔、尼罗河、法老" },
-        { name: "印度", code: "IND", lat: 20.6, lng: 79.0, capital: "新德里", language: "印地语", culture: "瑜伽、宝莱坞、香料" },
-        { name: "俄罗斯", code: "RUS", lat: 61.5, lng: 105.3, capital: "莫斯科", language: "俄语", culture: "芭蕾、伏特加、套娃" },
-        { name: "澳大利亚", code: "AUS", lat: -25.3, lng: 133.8, capital: "堪培拉", language: "英语", culture: "袋鼠、冲浪、大堡礁" },
-        { name: "加拿大", code: "CAN", lat: 56.1, lng: -106.3, capital: "渥太华", language: "英语/法语", culture: "枫叶、冰球、自然" }
-      ];
-
-      // Add country labels
-      globe.labelsData(countries)
-        .labelLat(d => d.lat)
-        .labelLng(d => d.lng)
-        .labelText(d => d.name)
-        .labelSize(1.5)
-        .labelColor(() => '#ffffff')
-        .labelResolution(6)
-        .labelAltitude(0.05)
-        .labelDotRadius(0.3)
-        .labelDotOrientation(() => 'top')
-        .onLabelClick((label) => {
-          // Zoom to country
-          globe.controls().autoRotate = false;
-          globe.pointOfView(
-            { lat: label.lat, lng: label.lng, altitude: 0.5 },
-            2000 // ms animation
-          );
-
-          // Show info panel
-          document.getElementById('countryName').textContent = label.name;
-          document.getElementById('capital').textContent = label.capital;
-          document.getElementById('language').textContent = label.language;
-          document.getElementById('culture').textContent = label.culture;
-          document.getElementById('infoPanel').style.display = 'block';
-        });
-
-      // Reset view function
-      window.resetView = function() {
-        globe.pointOfView(
-          { lat: 0, lng: 0, altitude: 2.5 },
-          2000
-        );
-        setTimeout(() => {
-          globe.controls().autoRotate = true;
-        }, 2000);
-        document.getElementById('infoPanel').style.display = 'none';
-      };
-
-      // Initial view
-      globe.pointOfView({ lat: 0, lng: 0, altitude: 2.5 });
+  function findNearestCountry(lat,lng){
+    let nearest=null,minDist=Infinity;
+    countryDatabase.forEach(function(c){
+      const dist=Math.hypot(lat-c.lat,lng-c.lng);
+      if(dist<minDist && dist<5){minDist=dist;nearest=c;}
     });
-  </script>
+    return nearest;
+  }
+
+  globe.onGlobeClick(function(coords){
+    const country=findNearestCountry(coords.lat,coords.lng);
+    if(country){
+      document.getElementById("modal-country-name").textContent=country.name;
+      document.getElementById("modal-capital").textContent=country.capital;
+      document.getElementById("modal-language").textContent=country.language;
+      document.getElementById("modal-culture").textContent=country.culture;
+      document.getElementById("globeModal").style.display="block";
+    }
+  });
+
+  function resizeGlobe(){
+    const el=document.getElementById("globeViz");
+    el.style.width=window.innerWidth+"px";
+    el.style.height=window.innerHeight+"px";
+  }
+  window.addEventListener("resize",resizeGlobe);
+  resizeGlobe();
+});
+</script>
 </body>
 </html>
