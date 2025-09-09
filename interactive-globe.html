@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Ultra Simple Globe</title>
+  <title>Simple Globe</title>
   <style>
     body, html { margin:0; padding:0; background:#000; overflow:hidden; }
     #globeViz { width:100vw; height:100vh; }
@@ -16,17 +16,16 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Create SIMPLEST POSSIBLE GLOBE
-      const globe = Globe()
-        .globeMaterial(() => new THREE.MeshBasicMaterial({ color: '#ff4500' })) // BRIGHT RED — impossible to miss
-        .showAtmosphere(false) // disable atmosphere
-        .showGraticules(false) // disable lines
-        (document.getElementById('globeViz'));
+      const globe = Globe()(document.getElementById('globeViz'));
 
-      // Rotate so you know it's alive
-      let speed = 0.005;
+      // Simple bright red globe
+      globe.globeMaterial(new THREE.MeshBasicMaterial({ color: '#ff4500' }));
+      globe.showAtmosphere(false);
+      globe.showGraticules(false);
+
+      // Rotate by modifying globeMesh.rotation.y
       function animate() {
-        globe.rotationY(globe.rotationY() + speed);
+        globe.globeMesh().rotation.y += 0.005;
         requestAnimationFrame(animate);
       }
       animate();
