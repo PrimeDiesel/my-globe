@@ -10,115 +10,34 @@
       overflow: hidden;
       background: #000;
     }
-    #globeViz {
-      width: 100vw;
-      height: 100vh;
-    }
-    #globeModal {
-      display: none;
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      z-index: 1000;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-      max-width: 320px;
-      font-family: system-ui;
-    }
+    #globeViz { width: 100vw; height: 100vh; }
   </style>
 </head>
 <body>
   <div id="globeViz"></div>
-  <div id="globeModal">
-    <h3>🌍 <span id="modal-country-name">Country</span></h3>
-    <p><strong>首都:</strong> <span id="modal-capital">—</span></p>
-    <p><strong>语言:</strong> <span id="modal-language">—</span></p>
-    <p><strong>文化:</strong> <span id="modal-culture">—</span></p>
-    <button onclick="document.getElementById('globeModal').style.display='none'">关闭</button>
-  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/globe.gl@2.35.0/dist/globe.gl.min.js"></script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize globe
-      const globe = Globe()
-        .globeMaterial(() => new THREE.MeshPhongMaterial({
-          color: '#1e6aa6',
-          shininess: 30,
-          specular: new THREE.Color('#ffffff')
-        }))
-        .bumpImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png')
-        .backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png')
-        .showAtmosphere(true)
-        .atmosphereColor('#88ccff')
-        .atmosphereAltitude(0.12)
-        .onGlobeClick((coords) => {
-          const clickedCountry = findNearestCountry(coords.lat, coords.lng);
-          if (clickedCountry) showCountryInfo(clickedCountry);
-        })
-        (document.getElementById('globeViz'));
+    document.addEventListener('DOMContentLoaded', () => {
+      const globe = Globe()(document.getElementById('globeViz'));
 
-      // Enable auto-rotation via OrbitControls (official way)
+      // Load realistic Earth texture
+      globe.globeMaterial(new THREE.MeshPhongMaterial({
+        map: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-blue-marble.jpg'),
+        bumpMap: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-topology.png'),
+        bumpScale: 0.3,
+        specularMap: new THREE.TextureLoader().load('https://cdn.jsdelivr.net/npm/three-globe/example/img/earth-specular.gif'),
+        shininess: 10
+      }));
+
+      globe.backgroundImageUrl('https://cdn.jsdelivr.net/npm/three-globe/example/img/night-sky.png');
+      globe.showAtmosphere(true).atmosphereColor('#88ccff').atmosphereAltitude(0.12);
+
+      // Auto-rotation
       globe.controls().autoRotate = true;
-      globe.controls().autoRotateSpeed = 0.5; // slow rotation
-
-      // Optional: Disable auto-rotate on hover
-      globe.container().addEventListener('mouseenter', () => {
-        globe.controls().autoRotate = false;
-      });
-      globe.container().addEventListener('mouseleave', () => {
-        globe.controls().autoRotate = true;
-      });
-
-      // Zoom with mouse wheel (already handled by OrbitControls by default)
-
-      // Country database
-      const countryDatabase = {
-        "USA": { name: "美国", capital: "华盛顿", lat: 39.8, lng: -98.6, language: "英语", culture: "科技、自由、多元" },
-        "CHN": { name: "中国", capital: "北京", lat: 35.9, lng: 104.2, language: "中文", culture: "历史、美食、传统" },
-        "JPN": { name: "日本", capital: "东京", lat: 36.2, lng: 138.3, language: "日语", culture: "动漫、礼仪、技术" },
-        "FRA": { name: "法国", capital: "巴黎", lat: 46.6, lng: 2.0, language: "法语", culture: "艺术、浪漫、美食" },
-        "BRA": { name: "巴西", capital: "巴西利亚", lat: -14.2, lng: -51.9, language: "葡萄牙语", culture: "足球、狂欢节、自然" },
-        "EGY": { name: "埃及", capital: "开罗", lat: 26.8, lng: 30.8, language: "阿拉伯语", culture: "金字塔、尼罗河、法老" },
-        "IND": { name: "印度", capital: "新德里", lat: 20.6, lng: 79.0, language: "印地语", culture: "瑜伽、宝莱坞、香料" },
-        "RUS": { name: "俄罗斯", capital: "莫斯科", lat: 61.5, lng: 105.3, language: "俄语", culture: "芭蕾、伏特加、套娃" },
-        "AUS": { name: "澳大利亚", capital: "堪培拉", lat: -25.3, lng: 133.8, language: "英语", culture: "袋鼠、冲浪、大堡礁" },
-        "CAN": { name: "加拿大", capital: "渥太华", lat: 56.1, lng: -106.3, language: "英语/法语", culture: "枫叶、冰球、自然" }
-      };
-
-      function findNearestCountry(lat, lng) {
-        let nearest = null, minDist = Infinity;
-        for (let [code, c] of Object.entries(countryDatabase)) {
-          const dist = Math.hypot(lat - c.lat, lng - c.lng);
-          if (dist < minDist && dist < 15) {
-            minDist = dist;
-            nearest = { ...c, code };
-          }
-        }
-        return nearest;
-      }
-
-      function showCountryInfo(c) {
-        const m = document.getElementById.bind(document);
-        m('modal-country-name').textContent = c.name;
-        m('modal-capital').textContent = c.capital;
-        m('modal-language').textContent = c.language;
-        m('modal-culture').textContent = c.culture;
-        m('globeModal').style.display = 'block';
-      }
-
-      // Responsive
-      function resize() {
-        const el = document.getElementById('globeViz');
-        el.style.width = window.innerWidth + 'px';
-        el.style.height = window.innerHeight + 'px';
-      }
-      window.addEventListener('resize', resize);
-      resize();
+      globe.controls().autoRotateSpeed = 0.5;
     });
   </script>
 </body>
